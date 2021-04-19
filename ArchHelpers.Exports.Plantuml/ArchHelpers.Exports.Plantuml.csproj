@@ -1,14 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
-        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\ArchHelpers.Core\ArchHelpers.Core.csproj" />
-      <ProjectReference Include="..\ArchHelpers.Exports.Plantuml\ArchHelpers.Exports.Plantuml.csproj" />
     </ItemGroup>
 
 </Project>
