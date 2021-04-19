@@ -25,7 +25,7 @@ namespace ArchHelpers.ConsoleApp
             var context = MetadataContextFactory.CreateContextForDirectories(args[0]);
             var orleansRuntimeAssembly = context.LoadFromName("Orleans.Runtime");
 
-            await ProgramFlow(args[1], orleansRuntimeAssembly, "^Orleans.Runtime.GrainDirectory.GrainLocator", 2);
+            await ProgramFlow(args[1], orleansRuntimeAssembly, "^Orleans.Runtime.GrainDirectory.", 2);
             //PlayWithAssembly(orleansRuntimeAssembly);
             //await ExportToPlantUml1(args[1], orleansRuntimeAssembly);
             //PrintTypesInAssembly(orleansRuntimeAssembly);
@@ -35,7 +35,7 @@ namespace ArchHelpers.ConsoleApp
         {
             static ITypeWriter CreatePlantUmlTypeWriter()
             {
-                bool writeMembers = false;
+                bool writeMembers = true;
 
                 var queryType = new QueryType(new TypeQueryOptions());
                 var normalTypeNameConverter = new SimpleTypeNameConverter();
@@ -70,7 +70,13 @@ namespace ArchHelpers.ConsoleApp
             {
                 var rgb = new RelationGraphBuilder();
                 var fullGraph = rgb.BuildTypeRelationGraph(types, RelationGraphBuilderOptions.ExcludeSystemTypes);
-                return fullGraph.Filter(new FilterRelationOptions(classNameRegex, searchDepth));
+
+                Regex re = new(classNameRegex);
+                return fullGraph.Filter(
+                    new FilterRelationOptions(
+                        classNameRegex,
+                        searchDepth, t =>
+                            (t.FullName != null && re.IsMatch(t.FullName))));
             }
 
             async Task ExportToPlantUml(RelationsGraph relationsGraph)
@@ -78,6 +84,7 @@ namespace ArchHelpers.ConsoleApp
                 var exporter = new PlantumlExporter(CreatePlantUmlTypeWriter(), new EscapingTypenameConverter());
 
                 var relationsInNamespaces = relationsGraph.AsNamespaceTree();
+
                 await exporter.CreateClassDiagramFile(outputFileName, relationsInNamespaces);
             }
 

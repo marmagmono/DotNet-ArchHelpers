@@ -18,10 +18,16 @@ namespace ArchHelpers.Core.AssemblyQueries.TypeRelationsAnalysis
         /// </summary>
         public int SearchDepth { get; }
 
-        public FilterRelationOptions(string searchRootClassNameRegex, int searchDepth)
+        /// <summary>
+        /// Function used for filtering dependencies that should appear in the final relation tree.
+        /// </summary>
+        public Func<Type, bool>? DependencyFilter { get; }
+
+        public FilterRelationOptions(string searchRootClassNameRegex, int searchDepth, Func<Type, bool>? dependencyFilter = null)
         {
             SearchRootClassNameRegex = searchRootClassNameRegex;
             SearchDepth = searchDepth;
+            DependencyFilter = dependencyFilter;
         }
     }
 
@@ -50,6 +56,9 @@ namespace ArchHelpers.Core.AssemblyQueries.TypeRelationsAnalysis
                 options.SearchRootClassNameRegex,
                 RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant);
 
+            Func<Type, bool> acceptAllDependencies = _ => true;
+            Func<Type, bool> acceptDependency = options.DependencyFilter ?? acceptAllDependencies;
+
             // Initialize root search types
             var searchTypes = new Queue<TypeContext>();
             var visitedTypes = new HashSet<Type>();
@@ -73,13 +82,19 @@ namespace ArchHelpers.Core.AssemblyQueries.TypeRelationsAnalysis
                     foreach (var typeRelation in typeContext.Uses)
                     {
                         var typeToAdd = typeRelation.Dependency;
-                        AddTypeContextToQueue(searchTypes, visitedTypes, typeToAdd);
+                        if (acceptDependency(typeToAdd))
+                        {
+                            AddTypeContextToQueue(searchTypes, visitedTypes, typeToAdd);
+                        }
                     }
 
                     foreach (var typeRelation in typeContext.UsedBy)
                     {
                         var typeToAdd = typeRelation.Type;
-                        AddTypeContextToQueue(searchTypes, visitedTypes, typeToAdd);
+                        if (acceptDependency(typeToAdd))
+                        {
+                            AddTypeContextToQueue(searchTypes, visitedTypes, typeToAdd);
+                        }
                     }
                 }
             }
